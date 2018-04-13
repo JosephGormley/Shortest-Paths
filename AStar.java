@@ -4,6 +4,7 @@ import javafx.event.EventHandler;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.layout.HBox; 
+import javafx.scene.layout.VBox;
 import javafx.scene.layout.GridPane;
 import javafx.stage.Stage;
 
@@ -24,7 +25,7 @@ public class AStar extends Application {
    /***************
     * MAIN METHOD *
     ***************/
-    public static  void main(String[] args){
+    public static void main(String[] args){
         initialize();
         launch(args);
     }
@@ -42,21 +43,27 @@ public class AStar extends Application {
     /* CALLED BY LAUNCH() TO SET AND OPEN PRIMARY STAGE */
     public void start(Stage primaryStage) throws Exception {
 
-       // SET A STAGE & SCENE. 
+       HBox layout = new HBox(100);
+       Scene scene = new Scene(layout, 600, 800);
+
+       GridPane room = new GridPane();
+       VBox buttons = new VBox(50);  
+
+       Button addStart = new Button();
+       Button addEnd = new Button();       
+
+       // SET SCENE & STAGE. 
        //  ____________
        // |____________|
        // |       |    |
        // |       |    |
        // |       |    | 
-       // |_______|____| 
-       primaryStage.setTitle("Path Finder"); 
-       HBox layout = new HBox(2);
-       Scene scene = new Scene(layout, 600, 600);       
-       layout.getChildren().addAll(new GridPane(), new Button());
-
-
+       // |_______|____|
+       //   room | buttons  
+       layout.getChildren().addAll(room, buttons);
+       
        // ADD 'SQUARES' TO GIVE LEFT WINDOW A 'ROOM'.
-       // RIGHT WINDOW WILL BE USED AS SELECTOR.   
+       // ADD BUTTONS TO GIVE RIGHT WINDOW A 'MENU'.  
        //  ____________
        // |____________|
        // |[][][] |    |
@@ -67,14 +74,15 @@ public class AStar extends Application {
            for(int col = 0; col < COLUMNS; col++){
                Button button = new Button();
                button.setPrefSize(50, 50);
-               
-               layout.getChildren().get(0)(GridPane).add(button, row, col, 1, 1);
+               room.add(button, row, col, 1, 1);
            }
-        }
+       }
+
+       buttons.getChildren().addAll(addStart, addEnd);
 
        // DISPLAY WINDOW TO USER. 
        primaryStage.setScene(scene);
-      // primaryStage.setResizable(false);
+       // primaryStage.setResizable(false);
        primaryStage.show();
        
     }

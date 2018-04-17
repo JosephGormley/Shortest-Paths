@@ -49,8 +49,11 @@ public class AStar extends Application {
        GridPane room = new GridPane();
        VBox buttons = new VBox(50);  
 
-       Button addStart = new Button();
-       Button addEnd = new Button();       
+       Button addStart = new Button("Start Point");
+       addStart.setPrefSize(100, 50);
+       Button addEnd = new Button("End Point");       
+       Button start = new Button("Start");
+       
 
        // SET SCENE & STAGE. 
        //  ____________
@@ -78,7 +81,7 @@ public class AStar extends Application {
            }
        }
 
-       buttons.getChildren().addAll(addStart, addEnd);
+       buttons.getChildren().addAll(addStart, addEnd, start);
 
        // DISPLAY WINDOW TO USER. 
        primaryStage.setScene(scene);

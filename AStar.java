@@ -41,7 +41,10 @@ public class AStar extends Application {
     private static Block[][] grid = new Block[ROW_SIZE][COL_SIZE]; 
 
     // REPRESENTS STATUS OF BLOCK.
-    private enum Status { START, END, ROUTE, OPEN, CLOSED } 
+    private enum Status { START, OBSTACLE, END, ROUTE, OPEN, CLOSED } 
+
+    // REPRESENTS BLOCK BEING PLACED. 
+    private enum Selected { START, OBSTACLE, END }
 
    /***************
     * BLOCK CLASS *
@@ -76,41 +79,65 @@ public class AStar extends Application {
     * INITIALIZATION *
     ******************/
     /* GUI / 2D-ROOM INIT */
-    private Pane initialize(){
-
-        // WINDOW INIT.        
+    private Pane initialize() {
+ 
         Pane pane = new Pane();
-         pane.setStyle("-fx-background-color: LightGrey;");
-        VBox menu = new VBox(V_GAP);
-         menu.setStyle("-fx-background-color: White;");
-         menu.setPrefHeight(MENU_H);
-         menu.setPrefWidth(MENU_W);
-         menu.setAlignment(Pos.BOTTOM_CENTER);
-         menu.setTranslateX(ROOM_W);
-        StackPane spCount = new StackPane();
-         spCount.setStyle("-fx-background-color: LightGrey;");
-         spCount.setPrefHeight(MENU_H/3 + 1);
-         spCount.setPrefWidth(MENU_W);
+        VBox menu = new VBox();
+        StackPane sp = new StackPane();
+     
+        // CREATE WINDOW.         
+        pane.setStyle("-fx-background-color: LightGrey;");
+        menu = new VBox(V_GAP);
+        menu.setStyle("-fx-background-color: White;");
+        menu.setPrefHeight(MENU_H);
+        menu.setPrefWidth(MENU_W);
+        menu.setAlignment(Pos.BOTTOM_CENTER);
+        menu.setTranslateX(ROOM_W);
+        sp.setStyle("-fx-background-color: LightGrey;");
+        sp.setPrefHeight(MENU_H/3 + 1);
+        sp.setPrefWidth(MENU_W);
+  
+        // MENU VISUALIZATIONS. 
+        menuInit(menu, sp); 
+        // ROOM VISUALIZATIONS. 
+        roomInit(pane);
+       
+        pane.getChildren().addAll(menu);  
+        return pane;
+    }
 
-        // MENU INIT.
+   /*************
+    * MENU INIT *
+    *************/
+    public void menuInit(VBox menu, StackPane sp){
         Button addStart = new Button("Start Point");
+         addStart.setPrefWidth(150);
         Button addEnd = new Button("End Point");
-        Button start = new Button("Start");          
+        Button addObstacle = new Button("Obstacle Point");
+        Button startPath = new Button("Start");
         Label comparisons = new Label("COMPARISONS:");
          comparisons.setStyle("-fx-font-size: 20;");
-         comparisons.setPrefWidth(MENU_W - 20);
+         comparisons.setPrefWidth(MENU_W - 10);
          comparisons.setAlignment(Pos.CENTER_LEFT);
-        Label count = new Label("0");
+        Label count = new Label();
+         count.setText("0");
          count.setTextFill(Color.RED);
          count.setStyle("-fx-background-color: White; -fx-font-size: 60px;");
          count.setPrefHeight(MENU_H/3 - 1);
          count.setPrefWidth(MENU_W);
          count.setAlignment(Pos.CENTER);
+        Label author = new Label();
+         author.setText("designed & written by: Joseph Gormley");
+         author.setStyle("-fx-font-size: 10px;");
+        sp.getChildren().addAll(count, author);
+        sp.setAlignment(author, Pos.BOTTOM_RIGHT);
+        menu.getChildren().addAll(addStart, addObstacle, addEnd, startPath, comparisons, sp);
+    }
 
-        spCount.getChildren().add(count);
-        menu.getChildren().addAll(addStart, addEnd, start, comparisons, spCount);
-
-        // ROOM INIT.
+   /*************
+    * ROOM INIT *
+    *************/
+    public void roomInit(Pane pane){
         grid = new Block[ROW_SIZE][COL_SIZE];
         for(int row = 0; row < ROW_SIZE; row++){
            for(int col = 0; col < COL_SIZE; col++){
@@ -119,10 +146,6 @@ public class AStar extends Application {
                grid[row][col] = b;
            }
        }
-       
-       pane.getChildren().addAll(menu);  
-      
-       return pane;
     }
 
     @Override
@@ -130,6 +153,7 @@ public class AStar extends Application {
     public void start(Stage stage) throws Exception {
 
        Scene window = new Scene(initialize(), W, H - 1);
+       window.getStylesheets().add("ButtonTheme.css");
        stage.setTitle("Dijkstra Shortest Path w/ Heuristic Function - A*");
        stage.setResizable(false);
        stage.setScene(window);

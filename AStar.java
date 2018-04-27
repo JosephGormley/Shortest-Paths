@@ -9,19 +9,32 @@ import javafx.scene.layout.VBox;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.StackPane;
 import javafx.scene.shape.Rectangle;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import javafx.stage.Stage;
 import javafx.scene.paint.Color;
 import javafx.scene.Parent;
 import javafx.geometry.Pos;
-
+import javafx.geometry.Insets;
+import java.util.HashMap;
+import javafx.scene.input.MouseEvent;
 public class AStar extends Application {
+
+    // REPRESENTS STATUS OF BLOCK.
+    private enum Status { START, WALL, END, ROUTE, OPEN, CLOSED }
+
+    // REPRESENTS BLOCK BEING PLACED.
+    private enum Selected { START, WALL, END, RUN, REMOVE }
 
    /*******************
     * GLOBAL FIELD(S) *
     *******************/
-    // ROOM / MENU AND MENU BUTTON GAPS,
+    // ROOM / MENU GAP,
     private static final int V_GAP = 0; 
 
+    // COLOR BAR GAP.
+    private static final int H_GAP = 5;
+  
     // SIZE OF WINDOW. 
     private static final int H = 600;
     private static final int W = 850;
@@ -37,14 +50,12 @@ public class AStar extends Application {
     private static final int ROW_SIZE = ROOM_H / BLOCK_SIZE;
     private static final int COL_SIZE = ROOM_W / BLOCK_SIZE; 
 
-    // REPRESENTS ROOM'S STATE. 
+    // REPRESENTS PROGRAM'S STATE. 
     private static Block[][] grid = new Block[ROW_SIZE][COL_SIZE]; 
+    Selected buttonSelected = Selected.START;
 
-    // REPRESENTS STATUS OF BLOCK.
-    private enum Status { START, OBSTACLE, END, ROUTE, OPEN, CLOSED } 
-
-    // REPRESENTS BLOCK BEING PLACED. 
-    private enum Selected { START, OBSTACLE, END }
+    // MAPPING OF BLOCK STATE TO COLOR. 
+    HashMap<Selected, Color> map = new HashMap<Selected, Color>();
 
    /***************
     * BLOCK CLASS *
@@ -65,12 +76,17 @@ public class AStar extends Application {
             setTranslateX(x * BLOCK_SIZE);
             setTranslateY(y * BLOCK_SIZE);
             r = new Rectangle(BLOCK_SIZE - 1, BLOCK_SIZE - 1, Color.WHITE); 
-
+            r.setOnDragDetected(e -> r.startFullDrag());
             getChildren().add(r);                     
+
+            // TODO @ME: MUST UPDATE GRID AS BLOCKS ARE FILLED. 
+            setOnMousePressed(e -> r.setFill(map.get(buttonSelected)));
+            setOnMouseDragEntered(e -> r.setFill(map.get(buttonSelected)));                                    
         }
-      
+ 
         public String toString(){
-            return status + "";
+            String s = status + " ";
+            return s.charAt(0) + " ";
         }
     }
     
@@ -79,42 +95,83 @@ public class AStar extends Application {
     * INITIALIZATION *
     ******************/
     /* GUI / 2D-ROOM INIT */
-    private Pane initialize() {
- 
-        Pane pane = new Pane();
-        VBox menu = new VBox();
-        StackPane sp = new StackPane();
-     
-        // CREATE WINDOW.         
-        pane.setStyle("-fx-background-color: LightGrey;");
-        menu = new VBox(V_GAP);
-        menu.setStyle("-fx-background-color: White;");
-        menu.setPrefHeight(MENU_H);
-        menu.setPrefWidth(MENU_W);
-        menu.setAlignment(Pos.BOTTOM_CENTER);
-        menu.setTranslateX(ROOM_W);
-        sp.setStyle("-fx-background-color: LightGrey;");
-        sp.setPrefHeight(MENU_H/3 + 1);
-        sp.setPrefWidth(MENU_W);
+    private HBox initialize() {
+  
+        HBox hb = new HBox();
+        VBox menu = new VBox(V_GAP);
+        Pane room = new Pane();
+        StackPane spCount = new StackPane();
   
         // MENU VISUALIZATIONS. 
-        menuInit(menu, sp); 
+        menuInit(menu, spCount); 
+
         // ROOM VISUALIZATIONS. 
-        roomInit(pane);
+        roomInit(room);
        
-        pane.getChildren().addAll(menu);  
-        return pane;
+        hb.getChildren().addAll(room, menu);  
+
+        // MAP BLOCK STATES TO COLORS.
+        map.put(Selected.START, Color.GREEN);
+        map.put(Selected.WALL, Color.BLACK);
+        map.put(Selected.END, Color.RED);
+
+        return hb;
     }
 
    /*************
     * MENU INIT *
     *************/
-    public void menuInit(VBox menu, StackPane sp){
-        Button addStart = new Button("Start Point");
-         addStart.setPrefWidth(150);
-        Button addEnd = new Button("End Point");
-        Button addObstacle = new Button("Obstacle Point");
-        Button startPath = new Button("Start");
+    public void menuInit(VBox menu, StackPane spCount){
+
+        // MENU LAYOUT. 
+        menu.setStyle("-fx-background-color: White;");
+        menu.setPrefHeight(MENU_H);
+        menu.setPrefWidth(MENU_W);
+        menu.setAlignment(Pos.BOTTOM_CENTER);
+        spCount.setStyle("-fx-background-color: LightGrey;");
+        spCount.setPrefHeight(MENU_H / 3);
+        spCount.setPrefWidth(MENU_W);
+
+        // MENU - TITLE.
+        Label title = new Label();
+        title.setText("A*");
+        title.setStyle("-fx-font-size: 100px");
+        // MENU SELECTION BAR. 
+        HBox colorBar = new HBox(H_GAP);
+         colorBar.setPrefHeight(BLOCK_SIZE);
+         colorBar.setPrefWidth(MENU_W);
+         colorBar.setAlignment(Pos.CENTER);
+
+        Button addStart = new Button();
+         addStart.setText("SP");
+         addStart.getStyleClass().add("button-addStart");
+         addStart.setOnAction(e -> buttonSelected = Selected.START);
+
+        Button addWall = new Button();
+         addWall.setText("WP");
+         addWall.getStyleClass().add("button-addWall");   
+         addWall.setOnAction(e -> buttonSelected = Selected.WALL);
+
+        Button addEnd = new Button();
+         addEnd.setText("EP");
+         addEnd.getStyleClass().add("button-addEnd");
+         addEnd.setOnAction(e -> buttonSelected = Selected.END);
+                 
+        // MENU - RUN. 
+        Button run = new Button();
+         run.setText("RUN");
+         run.getStyleClass().add("button-run");
+        
+        // MRNU - REMOVE (TRASHCAN IMAGE).
+        ImageView iRemove = new ImageView(new Image(getClass().getResourceAsStream("remove.png")));
+         iRemove.setFitWidth(25);
+         iRemove.setFitHeight(25);
+        Button remove = new Button();
+         remove.getStyleClass().add("button-remove");
+         remove.setGraphic(iRemove);
+         remove.setAlignment(Pos.BOTTOM_LEFT);         
+
+        // MENU TEXT. 
         Label comparisons = new Label("COMPARISONS:");
          comparisons.setStyle("-fx-font-size: 20;");
          comparisons.setPrefWidth(MENU_W - 10);
@@ -129,20 +186,30 @@ public class AStar extends Application {
         Label author = new Label();
          author.setText("designed & written by: Joseph Gormley");
          author.setStyle("-fx-font-size: 10px;");
-        sp.getChildren().addAll(count, author);
-        sp.setAlignment(author, Pos.BOTTOM_RIGHT);
-        menu.getChildren().addAll(addStart, addObstacle, addEnd, startPath, comparisons, sp);
+         spCount.setMargin(author, new Insets(0, 2, 0, 0));         
+
+        // PIECE TOGETHER NDOES.
+        colorBar.getChildren().addAll(addStart, addWall, addEnd);
+        spCount.getChildren().addAll(count, author);
+        spCount.setAlignment(author, Pos.BOTTOM_RIGHT);
+        menu.getChildren().addAll(title, colorBar, run, remove, comparisons, spCount);
+        menu.setMargin(run, new Insets(30, 0, 0, 0));
+        menu.setMargin(remove, new Insets(0, 135, 30, 0));
+        menu.setMargin(title, new Insets(0, 0, 10, 40));
     }
 
    /*************
     * ROOM INIT *
     *************/
-    public void roomInit(Pane pane){
+    public void roomInit(Pane room){
+        room.setMinWidth(ROOM_W);
+        room.setMinHeight(ROOM_H);
+        room.setStyle("-fx-background-color: LightGrey;");
         grid = new Block[ROW_SIZE][COL_SIZE];
         for(int row = 0; row < ROW_SIZE; row++){
            for(int col = 0; col < COL_SIZE; col++){
                Block b = new Block(row, col);
-               pane.getChildren().add(b);
+               room.getChildren().add(b);
                grid[row][col] = b;
            }
        }
@@ -153,12 +220,12 @@ public class AStar extends Application {
     public void start(Stage stage) throws Exception {
 
        Scene window = new Scene(initialize(), W, H - 1);
-       window.getStylesheets().add("ButtonTheme.css");
+       window.getStylesheets().add("ButtonThemes.css");
        stage.setTitle("Dijkstra Shortest Path w/ Heuristic Function - A*");
        stage.setResizable(false);
        stage.setScene(window);
 
-       printRoom();
+//       printRoom();
 
        stage.show();
        

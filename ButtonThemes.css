@@ -1,4 +1,4 @@
-/* BUTTON STYLE-SHEET TO PLACE START POINT */
+/* BUTTON STYLE-SHEET TO PLACE START BLOCK */
 .button-addStart {
     -fx-background-color: White;
     -fx-background-radius: 0px;
@@ -19,7 +19,7 @@
     -fx-padding: 2px 15px;
 }
 
-/* BUTTON STYLE-SHEET TO PLACE END POINT */
+/* BUTTON STYLE-SHEET TO PLACE END BLOCK*/
 .button-addEnd {
     -fx-background-color: White;
     -fx-background-radius: 0px;
@@ -40,8 +40,8 @@
     -fx-padding: 2px 15px;
 }
 
-/* BUTTON STYLE-SHEET TO PLACE OBSTACLE POINT */
-.button-addObstacle {
+/* BUTTON STYLE-SHEET TO PLACE WALL BLOCK */
+.button-addWall {
     -fx-background-color: White;
     -fx-background-radius: 0px;
     -fx-background-insets: 0;   
@@ -50,37 +50,20 @@
     -fx-font-size: 14px;
 }
 
-.button-addObstacle:hover {
+.button-addWall:hover {
     -fx-background-color: Black;
     -fx-text-fill: White;
     -fx-padding: 2px 15px;
     -fx-cursor: hand;
 }
-.button-addObstacle:focused {
+.button-addWall:focused {
     -fx-background-color: Black;
     -fx-text-fill: White;
     -fx-padding: 2px 15px;
 }
 
-/* BUTTON STYLE-SHEET TO REMOVE POINT */
-.button-remove {
-    -fx-background-color: White;
-    -fx-background-radius: 0px;
-    -fx-background-insets: 0;   
-    -fx-border-color: LightGrey;
-    -fx-padding: 4px 18px;
-    -fx-font-size: 14px;
-}
-.button-remove:hover {
-    -fx-padding: 2px 15px;
-    -fx-cursor: hand;
-}
-.button-remove:focused {
-    -fx-padding: 2px 15px;
-}
-
-/* BUTTON STYLE-SHEET TO START ALGORITHM */
-.button-start {
+/* BUTTON STYLE-SHEET TO RUN ALGORITHM */
+.button-run {
     -fx-background-color: White;
     -fx-background-radius: 100px; 
     -fx-border-radius: 100px; 
@@ -91,10 +74,14 @@
     -fx-min-width: 100px;
     -fx-min-height: 100px;
 }
-.button-start:hover {   
+.button-run:hover {   
     -fx-border-color: Green;
 }
-.button-start:focused {
+.button-run:focused {
     -fx-border-color: Green;
 }
- 
+
+/* BUTTON STYLE-SHEET TO REMOVE BLOCKS */ 
+.button-remove {
+    -fx-background-color: White;
+}

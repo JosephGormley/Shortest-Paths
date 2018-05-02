@@ -2,7 +2,7 @@
 .button-addStart {
     -fx-background-color: White;
     -fx-background-radius: 0px;
-    -fx-background-insets: 0;   
+    -fx-background-insets: 0;
     -fx-border-color: LightGrey;
     -fx-padding: 4px 18px;
     -fx-font-size: 14px;
@@ -11,17 +11,18 @@
     -fx-background-color: Green;
     -fx-text-fill: White;
     -fx-padding: 2px 15px;
+    -fx-background-insets: 0;
     -fx-cursor: hand;
 }
 .button-addStart:focused {
     -fx-background-color: Green;
-    -fx-text-fill: White;
+    -fx-text-fill: White; 
     -fx-padding: 2px 15px;
 }
 
 /* BUTTON STYLE-SHEET TO PLACE END BLOCK*/
 .button-addEnd {
-    -fx-background-color: White;
+    -fx-body-color: White;
     -fx-background-radius: 0px;
     -fx-background-insets: 0;   
     -fx-border-color: LightGrey;
@@ -31,6 +32,7 @@
 .button-addEnd:hover {
     -fx-background-color: Red;
     -fx-text-fill: White;
+    -fx-background-insets: 0;
     -fx-padding: 2px 15px;
     -fx-cursor: hand;
 }
@@ -49,7 +51,6 @@
     -fx-padding: 4px 18px;
     -fx-font-size: 14px;
 }
-
 .button-addWall:hover {
     -fx-background-color: Black;
     -fx-text-fill: White;
@@ -76,6 +77,7 @@
 }
 .button-run:hover {   
     -fx-border-color: Green;
+    -fx-cursor: hand;
 }
 .button-run:focused {
     -fx-border-color: Green;
@@ -83,5 +85,19 @@
 
 /* BUTTON STYLE-SHEET TO REMOVE BLOCKS */ 
 .button-remove {
+    -fx-background-image: url("remove.png");
     -fx-background-color: White;
+    -fx-background-size: 25px 25px;
+    -fx-background-position: center;
+    -fx-backgroun-repeat: no-repeat; 
+}
+.button-remove:hover {
+    -fx-background-image: url("remove.png");
+    -fx-background-size: 20px 20px;
+    -fx-background-repeat: no-repeat;
+    -fx-cursor: hand;
+}
+.button-remove:focused {
+    -fx-background-size: 20px 20px;
+    -fx-background-repeat: no-repeat;
 }

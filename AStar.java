@@ -11,20 +11,21 @@ import javafx.scene.layout.StackPane;
 import javafx.scene.shape.Rectangle;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+import javafx.scene.input.MouseEvent;
 import javafx.stage.Stage;
 import javafx.scene.paint.Color;
 import javafx.scene.Parent;
 import javafx.geometry.Pos;
 import javafx.geometry.Insets;
 import java.util.HashMap;
-import javafx.scene.input.MouseEvent;
+
 public class AStar extends Application {
 
     // REPRESENTS STATUS OF BLOCK.
-    private enum Status { START, WALL, END, ROUTE, OPEN, CLOSED }
+    private enum Status { START, WALL, END, OPEN, ROUTE, CLOSED }
 
     // REPRESENTS BLOCK BEING PLACED.
-    private enum Selected { START, WALL, END, RUN, REMOVE }
+    private enum Selected { START, WALL, END, OPEN, RUN }
 
    /*******************
     * GLOBAL FIELD(S) *
@@ -72,20 +73,41 @@ public class AStar extends Application {
             this.x = x;
             this.y = y;          
             status = Status.OPEN;
-            
-            setTranslateX(x * BLOCK_SIZE);
-            setTranslateY(y * BLOCK_SIZE);
+
+            // X AND Y ARE SWAPPED DUE TO NATURE OF NEXT TWO LINES.             
+            setTranslateX(y * BLOCK_SIZE);
+            setTranslateY(x * BLOCK_SIZE);
             r = new Rectangle(BLOCK_SIZE - 1, BLOCK_SIZE - 1, Color.WHITE); 
             r.setOnDragDetected(e -> r.startFullDrag());
             getChildren().add(r);                     
-
-            // TODO @ME: MUST UPDATE GRID AS BLOCKS ARE FILLED. 
-            setOnMousePressed(e -> r.setFill(map.get(buttonSelected)));
-            setOnMouseDragEntered(e -> r.setFill(map.get(buttonSelected)));                                    
-        }
  
-        public String toString(){
-            String s = status + " ";
+            setOnMousePressed(e -> placeBlock());
+            setOnMouseDragEntered(e -> placeBlock());                                    
+        }
+  
+        private void placeBlock(){
+ 
+            r.setFill(map.get(buttonSelected));    
+            switch(buttonSelected){
+                case START:
+                    grid[x][y].status = Status.START; 
+                    break;
+                case WALL:
+                    grid[x][y].status = Status.WALL;
+                    break;
+                case END:
+                    grid[x][y].status = Status.END;
+                    break;
+                case OPEN:
+                    grid[x][y].status = Status.OPEN;
+                    break;
+            }
+      
+            printGrid();
+        }
+
+        public String toString(){            
+            String s = grid[x][y].status + " ";
             return s.charAt(0) + " ";
         }
     }
@@ -114,6 +136,7 @@ public class AStar extends Application {
         map.put(Selected.START, Color.GREEN);
         map.put(Selected.WALL, Color.BLACK);
         map.put(Selected.END, Color.RED);
+        map.put(Selected.OPEN, Color.WHITE);       
 
         return hb;
     }
@@ -121,7 +144,7 @@ public class AStar extends Application {
    /*************
     * MENU INIT *
     *************/
-    public void menuInit(VBox menu, StackPane spCount){
+    private void menuInit(VBox menu, StackPane spCount){
 
         // MENU LAYOUT. 
         menu.setStyle("-fx-background-color: White;");
@@ -132,10 +155,11 @@ public class AStar extends Application {
         spCount.setPrefHeight(MENU_H / 3);
         spCount.setPrefWidth(MENU_W);
 
-        // MENU - TITLE.
+        // MENU TITLE.
         Label title = new Label();
-        title.setText("A*");
-        title.setStyle("-fx-font-size: 100px");
+         title.setText("A*");
+         title.setStyle("-fx-font-size: 100px");
+
         // MENU SELECTION BAR. 
         HBox colorBar = new HBox(H_GAP);
          colorBar.setPrefHeight(BLOCK_SIZE);
@@ -161,15 +185,13 @@ public class AStar extends Application {
         Button run = new Button();
          run.setText("RUN");
          run.getStyleClass().add("button-run");
+         run.setOnAction(e -> runAlgorithm(addStart, addWall, addEnd));
         
-        // MRNU - REMOVE (TRASHCAN IMAGE).
-        ImageView iRemove = new ImageView(new Image(getClass().getResourceAsStream("remove.png")));
-         iRemove.setFitWidth(25);
-         iRemove.setFitHeight(25);
+        // MENU - REMOVE (TRASHCAN IMAGE).
         Button remove = new Button();
          remove.getStyleClass().add("button-remove");
-         remove.setGraphic(iRemove);
          remove.setAlignment(Pos.BOTTOM_LEFT);         
+         remove.setOnAction(e -> buttonSelected = Selected.OPEN);
 
         // MENU TEXT. 
         Label comparisons = new Label("COMPARISONS:");
@@ -188,7 +210,7 @@ public class AStar extends Application {
          author.setStyle("-fx-font-size: 10px;");
          spCount.setMargin(author, new Insets(0, 2, 0, 0));         
 
-        // PIECE TOGETHER NDOES.
+        // PIECE TOGETHER NODES.
         colorBar.getChildren().addAll(addStart, addWall, addEnd);
         spCount.getChildren().addAll(count, author);
         spCount.setAlignment(author, Pos.BOTTOM_RIGHT);
@@ -201,14 +223,14 @@ public class AStar extends Application {
    /*************
     * ROOM INIT *
     *************/
-    public void roomInit(Pane room){
+    private void roomInit(Pane room){
         room.setMinWidth(ROOM_W);
         room.setMinHeight(ROOM_H);
         room.setStyle("-fx-background-color: LightGrey;");
         grid = new Block[ROW_SIZE][COL_SIZE];
         for(int row = 0; row < ROW_SIZE; row++){
            for(int col = 0; col < COL_SIZE; col++){
-               Block b = new Block(row, col);
+               Block b = new Block(row, col); 
                room.getChildren().add(b);
                grid[row][col] = b;
            }
@@ -225,10 +247,19 @@ public class AStar extends Application {
        stage.setResizable(false);
        stage.setScene(window);
 
-//       printRoom();
-
        stage.show();
        
+    }
+
+   /****************
+    * A* ALGORITHM *
+    ****************/
+    private void runAlgorithm(Button addStart, Button addWall, Button addEnd){
+
+        // DECLARE / INIT NECESSARY DATA STRUCTURES.
+        addStart.setDisable(true);
+        addWall.setDisable(true);
+        addEnd.setDisable(true);
     }
 
    /***************
@@ -242,13 +273,14 @@ public class AStar extends Application {
     * HELPER METHOD(S) *   
     ********************/
     // NOTE THESE METHODS WILL BE USED FOR DEBUGGING. 
-    public static void printRoom(){
+    private static void printGrid(){
        for(int row = 0; row < ROW_SIZE; row++){
            for(int col = 0; col < COL_SIZE; col++){
                System.out.print(grid[row][col] + " ");
            }
            System.out.println();
        }
+       System.out.println();
     }
     
 }

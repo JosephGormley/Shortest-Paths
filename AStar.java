@@ -1,3 +1,4 @@
+// GUI IMPORTS. 
 import javafx.application.Application;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
@@ -12,12 +13,15 @@ import javafx.scene.shape.Rectangle;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseEvent;
-import javafx.stage.Stage;
 import javafx.scene.paint.Color;
-import javafx.scene.Parent;
+import javafx.stage.Stage;
 import javafx.geometry.Pos;
 import javafx.geometry.Insets;
+
+// BACKGROUND IMPORTS. 
 import java.util.HashMap;
+import java.util.List; 
+import java.util.ArrayList;
 
 public class AStar extends Application {
 
@@ -103,7 +107,10 @@ public class AStar extends Application {
                     break;
             }
       
-            printGrid();
+//            printGrid();
+            System.out.println();
+            findNeighbors(grid[x][y]);
+            System.out.println();
         }
 
         public String toString(){            
@@ -251,16 +258,55 @@ public class AStar extends Application {
        
     }
 
-   /****************
-    * A* ALGORITHM *
-    ****************/
+   /*********************************
+    * A* ALGORITHM (HEURISTIC FUNC) *
+    *********************************/
     private void runAlgorithm(Button addStart, Button addWall, Button addEnd){
 
         // DECLARE / INIT NECESSARY DATA STRUCTURES.
+//        Queue openList; 
+//        Queue closedList; 
+
+ 
+        // DISABLE BUTTONS TO PREVENT RUINING 'RUN' STATE. 
         addStart.setDisable(true);
         addWall.setDisable(true);
         addEnd.setDisable(true);
     }
+
+    private List<Block> findNeighbors(Block b){
+        
+        List<Block> neighbors = new ArrayList<Block>();
+
+        int[] points = { -1, -1, 
+                         -1,  0,
+                         -1,  1, 
+                          0, -1,
+                          0,  1, 
+                          1, -1, 
+                          1,  0, 
+                          1,  1 
+                        };
+
+        int dx, dy, newX, newY; 
+
+        for(int i = 0; i < points.length; i++){
+
+            dx = points[i];
+            dy = points[++i];
+
+            newX = dx + b.x;
+            newY = dy + b.y;
+ 
+            if(newX >= 0 && newX < ROW_SIZE && newY >= 0 && newY < COL_SIZE){
+                Block neighbor = grid[newX][newY];
+                neighbors.add(neighbor);
+            }      
+        }
+
+        return neighbors;
+    }
+
 
    /***************
     * MAIN METHOD *

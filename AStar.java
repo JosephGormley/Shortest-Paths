@@ -62,13 +62,19 @@ public class AStar extends Application {
     // MAPPING OF BLOCK STATE TO COLOR. 
     HashMap<Selected, Color> map = new HashMap<Selected, Color>();
 
+    // NECESSARY TO RUN.
+    Block startPoint;
+    Block endPoint;
+    Block currentPoint;
+
    /***************
     * BLOCK CLASS *
     ***************/
     /* REPRESENTS TILES OF 2D-ROOM */
     private class Block extends StackPane {
 
-        private int x, y; 
+        private int x, y;
+        private int gCost, hCost, fCost;
         private Status status; 
        
         private Rectangle r;
@@ -76,6 +82,8 @@ public class AStar extends Application {
         public Block(int x, int y){
             this.x = x;
             this.y = y;          
+            gCost = 0;
+            hCost = 0;
             status = Status.OPEN;
 
             // X AND Y ARE SWAPPED DUE TO NATURE OF NEXT TWO LINES.             
@@ -92,25 +100,24 @@ public class AStar extends Application {
         private void placeBlock(){
  
             r.setFill(map.get(buttonSelected));    
+            System.out.println(x + " " + y);
             switch(buttonSelected){
                 case START:
                     grid[x][y].status = Status.START; 
+                    startPoint = grid[x][y];
                     break;
                 case WALL:
                     grid[x][y].status = Status.WALL;
                     break;
                 case END:
                     grid[x][y].status = Status.END;
+                    endPoint = grid[x][y];
                     break;
                 case OPEN:
                     grid[x][y].status = Status.OPEN;
                     break;
             }
-      
-//            printGrid();
-            System.out.println();
-            findNeighbors(grid[x][y]);
-            System.out.println();
+
         }
 
         public String toString(){            
@@ -179,7 +186,7 @@ public class AStar extends Application {
          addStart.setOnAction(e -> buttonSelected = Selected.START);
 
         Button addWall = new Button();
-         addWall.setText("WP");
+         addWall.setText("W");
          addWall.getStyleClass().add("button-addWall");   
          addWall.setOnAction(e -> buttonSelected = Selected.WALL);
 
@@ -248,13 +255,13 @@ public class AStar extends Application {
     /* CALLED BY LAUNCH() TO SET CONTEXT OF STAGE */
     public void start(Stage stage) throws Exception {
 
-       Scene window = new Scene(initialize(), W, H - 1);
-       window.getStylesheets().add("ButtonThemes.css");
-       stage.setTitle("Dijkstra Shortest Path w/ Heuristic Function - A*");
-       stage.setResizable(false);
-       stage.setScene(window);
+        Scene window = new Scene(initialize(), W, H - 1);
+        window.getStylesheets().add("ButtonThemes.css");
+        stage.setTitle("Dijkstra Shortest Path w/ Heuristic Function - A*");
+        stage.setResizable(false);
+        stage.setScene(window);
 
-       stage.show();
+        stage.show();
        
     }
 
@@ -264,14 +271,61 @@ public class AStar extends Application {
     private void runAlgorithm(Button addStart, Button addWall, Button addEnd){
 
         // DECLARE / INIT NECESSARY DATA STRUCTURES.
-//        Queue openList; 
-//        Queue closedList; 
-
+        List<Block> openList = new ArrayList<Block>(); 
+        List<Block> closedList = new ArrayList<Block>();   
  
         // DISABLE BUTTONS TO PREVENT RUINING 'RUN' STATE. 
         addStart.setDisable(true);
         addWall.setDisable(true);
         addEnd.setDisable(true);
+
+        currentPoint = startPoint; 
+        currentPoint.status = Status.WALL; // TO PREVENT RETRACING. 
+        while(currentPoint != endPoint){
+
+            // CALCULATE COSTS OF NEIGHBORS.
+            List<Block> neighbors = findNeighbors(currentPoint);
+            for(Block b : neighbors){
+  
+                int xDiff = 0;
+                int yDiff = 0;
+
+                // CALCULATE G & H COSTS.
+                // I.O.W. EUCLIDEAN DISTANCES. 
+                xDiff = b.x - startPoint.x;
+                yDiff = b.y - startPoint.y;
+                b.gCost = (int)Math.sqrt(Math.pow(xDiff, 2) + Math.pow(yDiff, 2));
+                xDiff = b.x - endPoint.x; 
+                yDiff = b.y - endPoint.y;
+                b.hCost = (int)Math.sqrt(Math.pow(xDiff, 2) + Math.pow(yDiff, 2));
+
+                // CALCULATE F COST.      
+                b.fCost = b.gCost + b.hCost;
+                System.out.print("Neighbor: " + b.x + "-" + b.y);
+                System.out.print(" | gCost of " + b.gCost);
+                System.out.print(" | hCost of " + b.hCost);
+                System.out.print(" | fCost of " + b.fCost);
+                System.out.println();
+                openList.add(b);
+            
+            }
+
+            Block b = openList.get(0);
+            // SEARCH OPEN LIST FOR LOWEST F COST. 
+            for(int i = 1; i < openList.size(); i++){
+                if(b.fCost > openList.get(i).fCost){
+                    b = openList.get(i);
+                }
+            }
+           
+            b.r.setFill(Color.BLUE);
+            currentPoint = b;
+            System.out.println("New current point: " + currentPoint.x + " " + currentPoint.y);
+            openList.remove(b);
+            currentPoint.status = Status.WALL; // TO PREVENT RETRACING.
+//            closedList.add(b);     
+     
+        }   
     }
 
     private List<Block> findNeighbors(Block b){
@@ -279,13 +333,13 @@ public class AStar extends Application {
         List<Block> neighbors = new ArrayList<Block>();
 
         int[] points = { -1, -1, 
-                         -1,  0,
-                         -1,  1, 
-                          0, -1,
-                          0,  1, 
-                          1, -1, 
+                         -1,  0, 
+                         -1,  1,
+                          0, -1, 
+                          0,  1,
+                          1, -1,
                           1,  0, 
-                          1,  1 
+                          1,  1,   
                         };
 
         int dx, dy, newX, newY; 
@@ -298,7 +352,7 @@ public class AStar extends Application {
             newX = dx + b.x;
             newY = dy + b.y;
  
-            if(newX >= 0 && newX < ROW_SIZE && newY >= 0 && newY < COL_SIZE){
+            if(newX >= 0 && newX < ROW_SIZE && newY >= 0 && newY < COL_SIZE && grid[newX][newY].status != Status.WALL){
                 Block neighbor = grid[newX][newY];
                 neighbors.add(neighbor);
             }      
@@ -318,7 +372,7 @@ public class AStar extends Application {
    /********************
     * HELPER METHOD(S) *   
     ********************/
-    // NOTE THESE METHODS WILL BE USED FOR DEBUGGING. 
+    // THE FOLLOWING METHODS WILL BE USED FOR DEBUGGING. 
     private static void printGrid(){
        for(int row = 0; row < ROW_SIZE; row++){
            for(int col = 0; col < COL_SIZE; col++){

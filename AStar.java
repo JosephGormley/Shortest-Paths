@@ -72,27 +72,27 @@ public class AStar extends Application {
     ***************/
     /* REPRESENTS TILES OF 2D-ROOM */
     private class Block extends StackPane {
-
+  
         private int x, y;
         private int gCost, hCost, fCost;
         private Status status; 
        
         private Rectangle r;
-
+  
         public Block(int x, int y){
             this.x = x;
             this.y = y;          
             gCost = 0;
             hCost = 0;
             status = Status.OPEN;
-
+  
             // X AND Y ARE SWAPPED DUE TO NATURE OF NEXT TWO LINES.             
             setTranslateX(y * BLOCK_SIZE);
             setTranslateY(x * BLOCK_SIZE);
             r = new Rectangle(BLOCK_SIZE - 1, BLOCK_SIZE - 1, Color.WHITE); 
             r.setOnDragDetected(e -> r.startFullDrag());
             getChildren().add(r);                     
- 
+  
             setOnMousePressed(e -> placeBlock());
             setOnMouseDragEntered(e -> placeBlock());                                    
         }
@@ -126,7 +126,6 @@ public class AStar extends Application {
         }
     }
     
-
    /******************
     * INITIALIZATION *
     ******************/
@@ -194,18 +193,18 @@ public class AStar extends Application {
          addEnd.setText("EP");
          addEnd.getStyleClass().add("button-addEnd");
          addEnd.setOnAction(e -> buttonSelected = Selected.END);
+        
+        // MENU - REMOVE (TRASHCAN IMAGE).
+        Button remove = new Button();
+         remove.getStyleClass().add("button-remove");
+         remove.setAlignment(Pos.BOTTOM_LEFT);
+         remove.setOnAction(e -> buttonSelected = Selected.OPEN);
                  
         // MENU - RUN. 
         Button run = new Button();
          run.setText("RUN");
          run.getStyleClass().add("button-run");
-         run.setOnAction(e -> runAlgorithm(addStart, addWall, addEnd));
-        
-        // MENU - REMOVE (TRASHCAN IMAGE).
-        Button remove = new Button();
-         remove.getStyleClass().add("button-remove");
-         remove.setAlignment(Pos.BOTTOM_LEFT);         
-         remove.setOnAction(e -> buttonSelected = Selected.OPEN);
+         run.setOnAction(e -> runAlgorithm(run, addStart, addWall, addEnd, remove));
 
         // MENU TEXT. 
         Label comparisons = new Label("COMPARISONS:");
@@ -268,7 +267,36 @@ public class AStar extends Application {
    /*********************************
     * A* ALGORITHM (HEURISTIC FUNC) *
     *********************************/
-    private void runAlgorithm(Button addStart, Button addWall, Button addEnd){
+    private void runAlgorithm(Button run, Button addStart, Button addWall, Button addEnd, Button remove){
+
+        // IF ALREADY RAN. OTHERWISE IGNORE. 
+        if(run.getText().equals("RESTART")){
+
+            run.setText("RUN");
+                        
+            // CLEAR ROOM. 
+            for(int row = 0; row < ROW_SIZE; row++){
+                for(int col = 0; col < COL_SIZE; col++){
+                    grid[row][col].status = Status.OPEN;
+                    grid[row][col].r.setFill(Color.WHITE);
+                }
+            }
+
+            // RESTART STATE. 
+            addStart.setDisable(false);
+            addWall.setDisable(false);
+            addEnd.setDisable(false);
+            remove.setDisable(false);
+            addStart.requestFocus();
+            startPoint = null;
+            endPoint = null;
+            currentPoint = null;
+
+            return;
+        }
+
+        // IF NOT RAN, CHANGE TO RESTART BUTTON. 
+        run.setText("RESTART");
 
         // DECLARE / INIT NECESSARY DATA STRUCTURES.
         List<Block> openList = new ArrayList<Block>(); 
@@ -278,6 +306,7 @@ public class AStar extends Application {
         addStart.setDisable(true);
         addWall.setDisable(true);
         addEnd.setDisable(true);
+        remove.setDisable(true);        
 
         currentPoint = startPoint; 
         currentPoint.status = Status.WALL; // TO PREVENT RETRACING. 
@@ -331,7 +360,7 @@ public class AStar extends Application {
     private List<Block> findNeighbors(Block b){
         
         List<Block> neighbors = new ArrayList<Block>();
-
+   
         int[] points = { -1, -1, 
                          -1,  0, 
                          -1,  1,
@@ -340,7 +369,7 @@ public class AStar extends Application {
                           1, -1,
                           1,  0, 
                           1,  1,   
-                        };
+                       };
 
         int dx, dy, newX, newY; 
 
@@ -384,4 +413,3 @@ public class AStar extends Application {
     }
     
 }
-

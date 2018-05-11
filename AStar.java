@@ -19,17 +19,27 @@ import javafx.geometry.Pos;
 import javafx.geometry.Insets;
 
 // BACKGROUND IMPORTS. 
+import java.util.Stack;
 import java.util.HashMap;
 import java.util.List; 
 import java.util.ArrayList;
 
 public class AStar extends Application {
 
+    // COLOR REPRESENTATIONS. 
+    Color empty = Color.WHITE;
+    Color sp = Color.GREEN;
+    Color ep = Color.RED;
+    Color op = Color.BLACK;
+    Color open = Color.WHITE;
+    Color closed = Color.WHITE;
+    Color shortedPath = Color.GREEN;
+
     // REPRESENTS STATUS OF BLOCK.
-    private enum Status { START, WALL, END, OPEN, ROUTE, CLOSED }
+    private enum Status { EMPTY, START, WALL, END, OPEN, ROUTE, CLOSED }
 
     // REPRESENTS BLOCK BEING PLACED.
-    private enum Selected { START, WALL, END, OPEN, RUN }
+    private enum Selected { START, WALL, END, EMPTY, RUN }
 
    /*******************
     * GLOBAL FIELD(S) *
@@ -38,7 +48,7 @@ public class AStar extends Application {
     private static final int V_GAP = 0; 
 
     // COLOR BAR GAP.
-    private static final int H_GAP = 5;
+    private static final int H_GAP = 25;
   
     // SIZE OF WINDOW. 
     private static final int H = 600;
@@ -65,7 +75,6 @@ public class AStar extends Application {
     // NECESSARY TO RUN.
     Block startPoint;
     Block endPoint;
-    Block currentPoint;
 
    /***************
     * BLOCK CLASS *
@@ -78,18 +87,20 @@ public class AStar extends Application {
         private Status status; 
        
         private Rectangle r;
+        private Block parent;
   
         public Block(int x, int y){
             this.x = x;
             this.y = y;          
             gCost = 0;
             hCost = 0;
-            status = Status.OPEN;
-  
+            status = Status.EMPTY;
+            parent = null;  
+
             // X AND Y ARE SWAPPED DUE TO NATURE OF NEXT TWO LINES.             
             setTranslateX(y * BLOCK_SIZE);
             setTranslateY(x * BLOCK_SIZE);
-            r = new Rectangle(BLOCK_SIZE - 1, BLOCK_SIZE - 1, Color.WHITE); 
+            r = new Rectangle(BLOCK_SIZE - 1, BLOCK_SIZE - 1, empty); 
             r.setOnDragDetected(e -> r.startFullDrag());
             getChildren().add(r);                     
   
@@ -113,8 +124,8 @@ public class AStar extends Application {
                     grid[x][y].status = Status.END;
                     endPoint = grid[x][y];
                     break;
-                case OPEN:
-                    grid[x][y].status = Status.OPEN;
+                case EMPTY:
+                    grid[x][y].status = Status.EMPTY;
                     break;
             }
 
@@ -146,10 +157,10 @@ public class AStar extends Application {
         hb.getChildren().addAll(room, menu);  
 
         // MAP BLOCK STATES TO COLORS.
-        map.put(Selected.START, Color.GREEN);
-        map.put(Selected.WALL, Color.BLACK);
-        map.put(Selected.END, Color.RED);
-        map.put(Selected.OPEN, Color.WHITE);       
+        map.put(Selected.START, sp);
+        map.put(Selected.WALL, op);
+        map.put(Selected.END, ep);
+        map.put(Selected.EMPTY, empty);       
 
         return hb;
     }
@@ -198,7 +209,7 @@ public class AStar extends Application {
         Button remove = new Button();
          remove.getStyleClass().add("button-remove");
          remove.setAlignment(Pos.BOTTOM_LEFT);
-         remove.setOnAction(e -> buttonSelected = Selected.OPEN);
+         remove.setOnAction(e -> buttonSelected = Selected.EMPTY);
                  
         // MENU - RUN. 
         Button run = new Button();
@@ -269,6 +280,8 @@ public class AStar extends Application {
     *********************************/
     private void runAlgorithm(Button run, Button addStart, Button addWall, Button addEnd, Button remove){
 
+        Block currentPoint = null;
+
         // IF ALREADY RAN. OTHERWISE IGNORE. 
         if(run.getText().equals("RESTART")){
 
@@ -277,8 +290,8 @@ public class AStar extends Application {
             // CLEAR ROOM. 
             for(int row = 0; row < ROW_SIZE; row++){
                 for(int col = 0; col < COL_SIZE; col++){
-                    grid[row][col].status = Status.OPEN;
-                    grid[row][col].r.setFill(Color.WHITE);
+                    grid[row][col].status = Status.EMPTY;
+                    grid[row][col].r.setFill(empty);
                 }
             }
 
@@ -288,6 +301,7 @@ public class AStar extends Application {
             addEnd.setDisable(false);
             remove.setDisable(false);
             addStart.requestFocus();
+            buttonSelected = Selected.START;
             startPoint = null;
             endPoint = null;
             currentPoint = null;
@@ -307,54 +321,70 @@ public class AStar extends Application {
         addWall.setDisable(true);
         addEnd.setDisable(true);
         remove.setDisable(true);        
-
-        currentPoint = startPoint; 
-        currentPoint.status = Status.WALL; // TO PREVENT RETRACING. 
+         
+        currentPoint = startPoint;        
         while(currentPoint != endPoint){
 
             // CALCULATE COSTS OF NEIGHBORS.
             List<Block> neighbors = findNeighbors(currentPoint);
             for(Block b : neighbors){
   
-                int xDiff = 0;
-                int yDiff = 0;
+                int xDiff, yDiff, minDiff, maxDiff;
 
-                // CALCULATE G & H COSTS.
-                // I.O.W. EUCLIDEAN DISTANCES. 
-                xDiff = b.x - startPoint.x;
-                yDiff = b.y - startPoint.y;
-                b.gCost = (int)Math.sqrt(Math.pow(xDiff, 2) + Math.pow(yDiff, 2));
-                xDiff = b.x - endPoint.x; 
-                yDiff = b.y - endPoint.y;
-                b.hCost = (int)Math.sqrt(Math.pow(xDiff, 2) + Math.pow(yDiff, 2));
-
+                // CALCULATE G COST.                         
+                xDiff = Math.abs(b.x - startPoint.x);
+                yDiff = Math.abs(b.y - startPoint.y);
+                minDiff = Math.min(xDiff, yDiff);
+                maxDiff = Math.max(xDiff, yDiff);
+                b.gCost = (minDiff * 14) + ((maxDiff - minDiff) * 10);          
+      
+                // CALCULATE H COST.
+                xDiff = Math.abs(b.x - endPoint.x);
+                yDiff = Math.abs(b.y - endPoint.y);
+                minDiff = Math.min(xDiff, yDiff);
+                maxDiff = Math.max(xDiff, yDiff);
+                b.hCost = (minDiff * 14) + ((maxDiff - minDiff) * 10);
+                
                 // CALCULATE F COST.      
                 b.fCost = b.gCost + b.hCost;
-                System.out.print("Neighbor: " + b.x + "-" + b.y);
-                System.out.print(" | gCost of " + b.gCost);
-                System.out.print(" | hCost of " + b.hCost);
-                System.out.print(" | fCost of " + b.fCost);
-                System.out.println();
+
+                grid[b.x][b.y].status = Status.OPEN;
                 openList.add(b);
-            
+                b.parent = currentPoint;
+                b.r.setFill(closed);
             }
 
-            Block b = openList.get(0);
+            currentPoint = openList.get(0);
             // SEARCH OPEN LIST FOR LOWEST F COST. 
             for(int i = 1; i < openList.size(); i++){
-                if(b.fCost > openList.get(i).fCost){
-                    b = openList.get(i);
+                // IF B HAS LOWER F.
+                if(openList.get(i).fCost < currentPoint.fCost){ // IF B HAS LOWER F.
+                    currentPoint = openList.get(i);
                 }
+                // IF B HAS SAME F COST, GO WITH LOWER H.
+                if(openList.get(i).fCost == currentPoint.fCost){                    
+                    currentPoint = openList.get(i).hCost > currentPoint.hCost? currentPoint : openList.get(i);
+                }           
+                    
             }
            
-            b.r.setFill(Color.BLUE);
-            currentPoint = b;
-            System.out.println("New current point: " + currentPoint.x + " " + currentPoint.y);
-            openList.remove(b);
-            currentPoint.status = Status.WALL; // TO PREVENT RETRACING.
-//            closedList.add(b);     
-     
+            currentPoint.r.setFill(open);
+            
+            openList.remove(currentPoint);
+//            closedList.add(currentPoint);
+           
         }   
+       
+        // TRACE BACK PATH TO START POINT.
+        Stack<Block> path = new Stack<Block>();
+        for(Block b = endPoint.parent; b != startPoint; b = b.parent){
+            path.push(b);    
+        }
+        
+        while(!path.empty()){
+            path.pop().r.setFill(shortedPath);
+        }
+
     }
 
     private List<Block> findNeighbors(Block b){
@@ -381,9 +411,11 @@ public class AStar extends Application {
             newX = dx + b.x;
             newY = dy + b.y;
  
-            if(newX >= 0 && newX < ROW_SIZE && newY >= 0 && newY < COL_SIZE && grid[newX][newY].status != Status.WALL){
-                Block neighbor = grid[newX][newY];
-                neighbors.add(neighbor);
+            if(newX >= 0 && newX < ROW_SIZE && newY >= 0 && newY < COL_SIZE){
+                if(grid[newX][newY].status != Status.WALL && grid[newX][newY].status != Status.OPEN){
+                    Block neighbor = grid[newX][newY];
+                    neighbors.add(neighbor);
+                }
             }      
         }
 

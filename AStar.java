@@ -33,7 +33,7 @@ public class AStar extends Application {
     Color op = Color.BLACK;
     Color open = Color.WHITE;
     Color closed = Color.WHITE;
-    Color shortedPath = Color.GREEN;
+    Color shortedPath = Color.LIGHTGREEN;
 
     // REPRESENTS STATUS OF BLOCK.
     private enum Status { EMPTY, START, WALL, END, OPEN, ROUTE, CLOSED }
@@ -67,14 +67,15 @@ public class AStar extends Application {
 
     // REPRESENTS PROGRAM'S STATE. 
     private static Block[][] grid = new Block[ROW_SIZE][COL_SIZE]; 
-    Selected buttonSelected = Selected.START;
+    private Selected buttonSelected = Selected.START;
+    private int comparisonCount = 0;
 
     // MAPPING OF BLOCK STATE TO COLOR. 
-    HashMap<Selected, Color> map = new HashMap<Selected, Color>();
+    private HashMap<Selected, Color> map = new HashMap<Selected, Color>();
 
     // NECESSARY TO RUN.
-    Block startPoint;
-    Block endPoint;
+    private Block startPoint;
+    private Block endPoint;
 
    /***************
     * BLOCK CLASS *
@@ -111,7 +112,6 @@ public class AStar extends Application {
         private void placeBlock(){
  
             r.setFill(map.get(buttonSelected));    
-            System.out.println(x + " " + y);
             switch(buttonSelected){
                 case START:
                     grid[x][y].status = Status.START; 
@@ -211,19 +211,13 @@ public class AStar extends Application {
          remove.setAlignment(Pos.BOTTOM_LEFT);
          remove.setOnAction(e -> buttonSelected = Selected.EMPTY);
                  
-        // MENU - RUN. 
-        Button run = new Button();
-         run.setText("RUN");
-         run.getStyleClass().add("button-run");
-         run.setOnAction(e -> runAlgorithm(run, addStart, addWall, addEnd, remove));
-
         // MENU TEXT. 
         Label comparisons = new Label("COMPARISONS:");
          comparisons.setStyle("-fx-font-size: 20;");
          comparisons.setPrefWidth(MENU_W - 10);
          comparisons.setAlignment(Pos.CENTER_LEFT);
         Label count = new Label();
-         count.setText("0");
+         count.setText(comparisonCount + "");
          count.setTextFill(Color.RED);
          count.setStyle("-fx-background-color: White; -fx-font-size: 60px;");
          count.setPrefHeight(MENU_H/3 - 1);
@@ -233,6 +227,12 @@ public class AStar extends Application {
          author.setText("designed & written by: Joseph Gormley");
          author.setStyle("-fx-font-size: 10px;");
          spCount.setMargin(author, new Insets(0, 2, 0, 0));         
+
+        // MENU - RUN.
+        Button run = new Button();
+         run.setText("RUN");
+         run.getStyleClass().add("button-run");
+         run.setOnAction(e -> runAlgorithm(run, addStart, addWall, addEnd, remove, count));
 
         // PIECE TOGETHER NODES.
         colorBar.getChildren().addAll(addStart, addWall, addEnd);
@@ -278,7 +278,7 @@ public class AStar extends Application {
    /*********************************
     * A* ALGORITHM (HEURISTIC FUNC) *
     *********************************/
-    private void runAlgorithm(Button run, Button addStart, Button addWall, Button addEnd, Button remove){
+    private void runAlgorithm(Button run, Button addStart, Button addWall, Button addEnd, Button remove, Label count){
 
         Block currentPoint = null;
 
@@ -305,6 +305,8 @@ public class AStar extends Application {
             startPoint = null;
             endPoint = null;
             currentPoint = null;
+            comparisonCount = 0; 
+            count.setText(comparisonCount + "");
 
             return;
         }
@@ -360,19 +362,24 @@ public class AStar extends Application {
                 // IF B HAS LOWER F.
                 if(openList.get(i).fCost < currentPoint.fCost){ // IF B HAS LOWER F.
                     currentPoint = openList.get(i);
+                    comparisonCount++;
+                    
                 }
                 // IF B HAS SAME F COST, GO WITH LOWER H.
                 if(openList.get(i).fCost == currentPoint.fCost){                    
                     currentPoint = openList.get(i).hCost > currentPoint.hCost? currentPoint : openList.get(i);
+                    comparisonCount++;
                 }           
                     
             }
-           
-            currentPoint.r.setFill(open);
-            
+
+            currentPoint.r.setFill(open);            
             openList.remove(currentPoint);
 //            closedList.add(currentPoint);
            
+            // UPDATE COMPARISON COUNT.
+            count.setText(comparisonCount + "");
+
         }   
        
         // TRACE BACK PATH TO START POINT.
@@ -384,6 +391,9 @@ public class AStar extends Application {
         while(!path.empty()){
             path.pop().r.setFill(shortedPath);
         }
+
+        startPoint.r.setFill(sp);
+        endPoint.r.setFill(ep);      
 
     }
 

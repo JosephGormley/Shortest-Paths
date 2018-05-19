@@ -17,6 +17,9 @@ import javafx.scene.paint.Color;
 import javafx.stage.Stage;
 import javafx.geometry.Pos;
 import javafx.geometry.Insets;
+import javafx.util.Duration;
+import javafx.animation.KeyFrame;
+import javafx.animation.Timeline;
 
 // BACKGROUND IMPORTS. 
 import java.util.Stack;
@@ -33,7 +36,7 @@ public class AStar extends Application {
     Color op = Color.BLACK;
     Color open = Color.WHITE;
     Color closed = Color.WHITE;
-    Color shortedPath = Color.LIGHTGREEN;
+    Color shortestPath = Color.LIGHTGREEN;
 
     // REPRESENTS STATUS OF BLOCK.
     private enum Status { EMPTY, START, WALL, END, OPEN, ROUTE, CLOSED }
@@ -61,7 +64,7 @@ public class AStar extends Application {
     private static final int MENU_W = W - ROOM_W;     
 
     // NUMBER OF COLS AND ROWS.
-    private static final int BLOCK_SIZE = 25;
+    private static final int BLOCK_SIZE = 5;
     private static final int ROW_SIZE = ROOM_H / BLOCK_SIZE;
     private static final int COL_SIZE = ROOM_W / BLOCK_SIZE; 
 
@@ -75,8 +78,9 @@ public class AStar extends Application {
 
     // NECESSARY TO RUN.
     private Block startPoint;
+    private Block currentPoint;
     private Block endPoint;
-
+    
    /***************
     * BLOCK CLASS *
     ***************/
@@ -278,11 +282,9 @@ public class AStar extends Application {
    /*********************************
     * A* ALGORITHM (HEURISTIC FUNC) *
     *********************************/
-    private void runAlgorithm(Button run, Button addStart, Button addWall, Button addEnd, Button remove, Label count){
+    private void runAlgorithm(Button run, Button addStart, Button addWall, Button addEnd, Button remove, Label count){       
 
-        Block currentPoint = null;
-
-        // IF ALREADY RAN. OTHERWISE IGNORE. 
+        // IF ALREADY RUNNING. OTHERWISE IGNORE. 
         if(run.getText().equals("RESTART")){
 
             run.setText("RUN");
@@ -372,7 +374,7 @@ public class AStar extends Application {
                 }           
                     
             }
-
+ 
             currentPoint.r.setFill(open);            
             openList.remove(currentPoint);
 //            closedList.add(currentPoint);
@@ -387,13 +389,21 @@ public class AStar extends Application {
         for(Block b = endPoint.parent; b != startPoint; b = b.parent){
             path.push(b);    
         }
-        
+ 
+        // ADD PATH TO TIMELINE.         
+        Timeline slowPath = new Timeline();
+        Duration timePoint = Duration.ZERO;
         while(!path.empty()){
-            path.pop().r.setFill(shortedPath);
+//            System.out.println("Creating keyframe");
+            Block b = path.pop();
+            KeyFrame fillBlock = new KeyFrame(timePoint, e -> b.r.setFill(shortestPath));
+            timePoint = timePoint.add(Duration.millis(250));
+//            System.out.println("Adding keyframe");
+            slowPath.getKeyFrames().add(fillBlock);
+//            path.pop().r.setFill(shortedPath);
         }
-
-        startPoint.r.setFill(sp);
-        endPoint.r.setFill(ep);      
+  
+        slowPath.play();    
 
     }
 

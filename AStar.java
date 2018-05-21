@@ -29,17 +29,18 @@ import java.util.ArrayList;
 
 public class AStar extends Application {
 
-    // COLOR REPRESENTATIONS. 
-    Color empty = Color.WHITE;
-    Color sp = Color.GREEN;
-    Color ep = Color.RED;
-    Color op = Color.BLACK;
-    Color open = Color.WHITE;
-    Color closed = Color.WHITE;
-    Color shortestPath = Color.LIGHTGREEN;
+    // AESTHETICS.
+    private final Color empty = Color.WHITE;
+    private final Color sp = Color.GREEN;
+    private final Color ep = Color.RED;
+    private final Color op = Color.BLACK;
+    private final Color open = Color.DARKGREY;
+    private final Color closed = Color.LIGHTGREY;
+    private final Color shortestPath = Color.BLUE;
+    private final Duration pause = Duration.millis(50);
 
     // REPRESENTS STATUS OF BLOCK.
-    private enum Status { EMPTY, START, WALL, END, OPEN, ROUTE, CLOSED }
+    private enum Status { EMPTY, WALL, OPEN }
 
     // REPRESENTS BLOCK BEING PLACED.
     private enum Selected { START, WALL, END, EMPTY, RUN }
@@ -118,14 +119,14 @@ public class AStar extends Application {
             r.setFill(map.get(buttonSelected));    
             switch(buttonSelected){
                 case START:
-                    grid[x][y].status = Status.START; 
+                    grid[x][y].status = Status.OPEN; // I.E. DON'T CALCULATE F COST. 
                     startPoint = grid[x][y];
                     break;
                 case WALL:
                     grid[x][y].status = Status.WALL;
                     break;
                 case END:
-                    grid[x][y].status = Status.END;
+//                    grid[x][y].status = Status.OPEN; // I.E. DON'T CALCULATE F COST. 
                     endPoint = grid[x][y];
                     break;
                 case EMPTY:
@@ -314,25 +315,30 @@ public class AStar extends Application {
         }
 
         // IF NOT RAN, CHANGE TO RESTART BUTTON. 
-        run.setText("RESTART");
+//        run.setText("RESTART");
 
         // DECLARE / INIT NECESSARY DATA STRUCTURES.
         List<Block> openList = new ArrayList<Block>(); 
-        List<Block> closedList = new ArrayList<Block>();   
+//        List<Block> closedList = new ArrayList<Block>();   
  
         // DISABLE BUTTONS TO PREVENT RUINING 'RUN' STATE. 
         addStart.setDisable(true);
         addWall.setDisable(true);
         addEnd.setDisable(true);
         remove.setDisable(true);        
-         
+
+        // FOR AESTHETIC PURPOSES.
+        Timeline visualization = new Timeline();
+        Duration timePoint = Duration.ZERO;
+        KeyFrame fillBlock = null;      
+
         currentPoint = startPoint;        
         while(currentPoint != endPoint){
 
             // CALCULATE COSTS OF NEIGHBORS.
             List<Block> neighbors = findNeighbors(currentPoint);
             for(Block b : neighbors){
-  
+ 
                 int xDiff, yDiff, minDiff, maxDiff;
 
                 // CALCULATE G COST.                         
@@ -352,10 +358,15 @@ public class AStar extends Application {
                 // CALCULATE F COST.      
                 b.fCost = b.gCost + b.hCost;
 
+                // SET STATE OF BLOCK TO OPEN, SET PARENT.
                 grid[b.x][b.y].status = Status.OPEN;
                 openList.add(b);
                 b.parent = currentPoint;
-                b.r.setFill(closed);
+
+                // ADD COLOR OF BLOCK TO TIMELINE. 
+                fillBlock = new KeyFrame(timePoint, e -> b.r.setFill(open));
+                visualization.getKeyFrames().add(fillBlock);
+                timePoint = timePoint.add(pause);
             }
 
             currentPoint = openList.get(0);
@@ -375,7 +386,13 @@ public class AStar extends Application {
                     
             }
  
-            currentPoint.r.setFill(open);            
+            // ADD COLOR OF BLOCK TO TIMELINE. 
+            Rectangle r = currentPoint.r; 
+            fillBlock = new KeyFrame(timePoint, e -> r.setFill(closed));
+            visualization.getKeyFrames().add(fillBlock);
+            timePoint = timePoint.add(pause);
+
+            
             openList.remove(currentPoint);
 //            closedList.add(currentPoint);
            
@@ -391,19 +408,14 @@ public class AStar extends Application {
         }
  
         // ADD PATH TO TIMELINE.         
-        Timeline slowPath = new Timeline();
-        Duration timePoint = Duration.ZERO;
         while(!path.empty()){
-//            System.out.println("Creating keyframe");
             Block b = path.pop();
-            KeyFrame fillBlock = new KeyFrame(timePoint, e -> b.r.setFill(shortestPath));
-            timePoint = timePoint.add(Duration.millis(250));
-//            System.out.println("Adding keyframe");
-            slowPath.getKeyFrames().add(fillBlock);
-//            path.pop().r.setFill(shortedPath);
+            fillBlock = new KeyFrame(timePoint, e -> b.r.setFill(shortestPath));
+            visualization.getKeyFrames().add(fillBlock);
+            timePoint = timePoint.add(pause);
         }
   
-        slowPath.play();    
+        visualization.play();    
 
     }
 

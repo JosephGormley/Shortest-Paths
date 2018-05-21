@@ -314,14 +314,12 @@ public class AStar extends Application {
             return;
         }
 
-        // IF NOT RAN, CHANGE TO RESTART BUTTON. 
-//        run.setText("RESTART");
-
         // DECLARE / INIT NECESSARY DATA STRUCTURES.
         List<Block> openList = new ArrayList<Block>(); 
 //        List<Block> closedList = new ArrayList<Block>();   
  
         // DISABLE BUTTONS TO PREVENT RUINING 'RUN' STATE. 
+        run.setDisable(true);
         addStart.setDisable(true);
         addWall.setDisable(true);
         addEnd.setDisable(true);
@@ -364,9 +362,11 @@ public class AStar extends Application {
                 b.parent = currentPoint;
 
                 // ADD COLOR OF BLOCK TO TIMELINE. 
-                fillBlock = new KeyFrame(timePoint, e -> b.r.setFill(open));
-                visualization.getKeyFrames().add(fillBlock);
-                timePoint = timePoint.add(pause);
+                if(b != startPoint && b != endPoint){
+                    fillBlock = new KeyFrame(timePoint, e -> b.r.setFill(open));
+                    visualization.getKeyFrames().add(fillBlock);
+                    timePoint = timePoint.add(pause);
+                }
             }
 
             currentPoint = openList.get(0);
@@ -386,12 +386,13 @@ public class AStar extends Application {
                     
             }
  
-            // ADD COLOR OF BLOCK TO TIMELINE. 
-            Rectangle r = currentPoint.r; 
-            fillBlock = new KeyFrame(timePoint, e -> r.setFill(closed));
-            visualization.getKeyFrames().add(fillBlock);
-            timePoint = timePoint.add(pause);
-
+            // ADD COLOR OF BLOCK TO TIMELINE.
+            if(currentPoint != startPoint && currentPoint != endPoint){ 
+                Rectangle r = currentPoint.r; 
+                fillBlock = new KeyFrame(timePoint, e -> r.setFill(closed));
+                visualization.getKeyFrames().add(fillBlock);
+                timePoint = timePoint.add(pause);
+            }
             
             openList.remove(currentPoint);
 //            closedList.add(currentPoint);
@@ -414,8 +415,16 @@ public class AStar extends Application {
             visualization.getKeyFrames().add(fillBlock);
             timePoint = timePoint.add(pause);
         }
+
+        // CHANGE RUN TO RESTART, BUTTON REUSE.
+        KeyFrame restart = new KeyFrame(timePoint, e -> { run.setText("RESTART"); run.setDisable(false); });
+        visualization.getKeyFrames().add(restart);
   
-        visualization.play();    
+        visualization.play();
+ 
+        // CHANGE RUN TO RESTART. BUTTON REUSE.
+//        run.setText("RESTART");
+//        run.setDisable(false);
 
     }
 

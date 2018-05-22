@@ -40,7 +40,7 @@ public class AStar extends Application {
     private final Duration pathPause = Duration.millis(100);    
 
     // REPRESENTS STATUS OF BLOCK.
-    private enum Status { EMPTY, WALL, OPEN }
+    private enum Status { EMPTY, WALL, OPEN, CLOSED }
 
     // REPRESENTS BLOCK BEING PLACED.
     private enum Selected { START, WALL, END, EMPTY, RUN }
@@ -280,27 +280,28 @@ public class AStar extends Application {
         stage.show();
        
     }
-
+    
    /*********************************
     * A* ALGORITHM (HEURISTIC FUNC) *
     *********************************/
     private void runAlgorithm(Button run, Button addStart, Button addWall, Button addEnd, Button remove, Label count){       
-
+    
         Block currentPoint;
-
+    
         // IF ALREADY RUNNING. OTHERWISE IGNORE. 
         if(run.getText().equals("RESTART")){
-
+    
             run.setText("RUN");
-
-            // REMOVE PATH / OPEN / CLOSED BLOCKS. 
-//            for(Block b = endPoint.parent; b != startPoint; b = b.parent)
-//                b.r.setFill(empty);             
-            for(Block b : openList){
-                b.r.setFill(empty);
-            }
+    
+            // REMOVE OPEN / CLOSED BLOCKS. 
+            for(Block b : openList)
+//                if(b != startPoint && b != endPoint)
+                    b.r.setFill(empty);
             for(Block b : closedList)
-                b.r.setFill(empty);   
+//                if(b != startPoint && b != endPoint)
+                    b.r.setFill(empty);   
+
+            printGrid();
             
             // RESTART STATE. 
             addStart.setDisable(false);
@@ -312,10 +313,10 @@ public class AStar extends Application {
             currentPoint = null;
             comparisonCount = 0; 
             count.setText(comparisonCount + "");
-
+    
             return;
         }   
- 
+    
         // DISABLE BUTTONS TO PREVENT RUINING 'RUN' STATE. 
         run.setDisable(true);
         addStart.setDisable(true);
@@ -328,15 +329,18 @@ public class AStar extends Application {
         KeyFrame fillBlock = null;
         Duration timePoint = Duration.ZERO;      
 
-        currentPoint = startPoint;        
+        // SET CURRENT POINT, ADD CURRENT POINT TO CLOSED LIST. 
+        currentPoint = startPoint;
+        closedList.add(currentPoint);
+        grid[currentPoint.x][currentPoint.y].status = Status.CLOSED;        
         while(currentPoint != endPoint){
-
+    
             // CALCULATE COSTS OF NEIGHBORS.
             List<Block> neighbors = findNeighbors(currentPoint);
             for(Block b : neighbors){
- 
+    
                 int xDiff, yDiff, minDiff, maxDiff;
-
+    
                 // CALCULATE G COST.                         
                 xDiff = Math.abs(b.x - startPoint.x);
                 yDiff = Math.abs(b.y - startPoint.y);
@@ -394,7 +398,7 @@ public class AStar extends Application {
             
             openList.remove(currentPoint);
             closedList.add(currentPoint);
-
+            grid[currentPoint.x][currentPoint.y].status = Status.CLOSED;
         }   
        
         // TRACE BACK PATH TO START POINT.
@@ -444,7 +448,7 @@ public class AStar extends Application {
             newY = dy + b.y;
  
             if(newX >= 0 && newX < ROW_SIZE && newY >= 0 && newY < COL_SIZE){
-                if(grid[newX][newY].status != Status.WALL && grid[newX][newY].status != Status.OPEN){
+                if(grid[newX][newY].status != Status.WALL && grid[newX][newY].status != Status.OPEN && grid[newX][newY].status != Status.CLOSED){
                     Block neighbor = grid[newX][newY];
                     neighbors.add(neighbor);
                 }
@@ -473,7 +477,6 @@ public class AStar extends Application {
            }
            System.out.println();
        }
-       System.out.println();
     }
     
 }

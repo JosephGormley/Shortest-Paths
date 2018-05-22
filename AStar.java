@@ -36,8 +36,8 @@ public class AStar extends Application {
     private final Color op = Color.BLACK;
     private final Color open = Color.DARKGREY;
     private final Color closed = Color.LIGHTGREY;
-    private final Color shortestPath = Color.BLUE;
-    private final Duration pause = Duration.millis(50);
+    private final Duration seekPause = Duration.millis(25);
+    private final Duration pathPause = Duration.millis(100);    
 
     // REPRESENTS STATUS OF BLOCK.
     private enum Status { EMPTY, WALL, OPEN }
@@ -65,12 +65,14 @@ public class AStar extends Application {
     private static final int MENU_W = W - ROOM_W;     
 
     // NUMBER OF COLS AND ROWS.
-    private static final int BLOCK_SIZE = 5;
+    private static final int BLOCK_SIZE = 15;
     private static final int ROW_SIZE = ROOM_H / BLOCK_SIZE;
     private static final int COL_SIZE = ROOM_W / BLOCK_SIZE; 
 
     // REPRESENTS PROGRAM'S STATE. 
     private static Block[][] grid = new Block[ROW_SIZE][COL_SIZE]; 
+    private List<Block> openList = new ArrayList<Block>();
+    private List<Block> closedList = new ArrayList<Block>(); 
     private Selected buttonSelected = Selected.START;
     private int comparisonCount = 0;
 
@@ -79,7 +81,6 @@ public class AStar extends Application {
 
     // NECESSARY TO RUN.
     private Block startPoint;
-    private Block currentPoint;
     private Block endPoint;
     
    /***************
@@ -285,19 +286,22 @@ public class AStar extends Application {
     *********************************/
     private void runAlgorithm(Button run, Button addStart, Button addWall, Button addEnd, Button remove, Label count){       
 
+        Block currentPoint;
+
         // IF ALREADY RUNNING. OTHERWISE IGNORE. 
         if(run.getText().equals("RESTART")){
 
             run.setText("RUN");
-                        
-            // CLEAR ROOM. 
-            for(int row = 0; row < ROW_SIZE; row++){
-                for(int col = 0; col < COL_SIZE; col++){
-                    grid[row][col].status = Status.EMPTY;
-                    grid[row][col].r.setFill(empty);
-                }
-            }
 
+            // REMOVE PATH / OPEN / CLOSED BLOCKS. 
+//            for(Block b = endPoint.parent; b != startPoint; b = b.parent)
+//                b.r.setFill(empty);             
+            for(Block b : openList){
+                b.r.setFill(empty);
+            }
+            for(Block b : closedList)
+                b.r.setFill(empty);   
+            
             // RESTART STATE. 
             addStart.setDisable(false);
             addWall.setDisable(false);
@@ -305,18 +309,12 @@ public class AStar extends Application {
             remove.setDisable(false);
             addStart.requestFocus();
             buttonSelected = Selected.START;
-            startPoint = null;
-            endPoint = null;
             currentPoint = null;
             comparisonCount = 0; 
             count.setText(comparisonCount + "");
 
             return;
-        }
-
-        // DECLARE / INIT NECESSARY DATA STRUCTURES.
-        List<Block> openList = new ArrayList<Block>(); 
-//        List<Block> closedList = new ArrayList<Block>();   
+        }   
  
         // DISABLE BUTTONS TO PREVENT RUINING 'RUN' STATE. 
         run.setDisable(true);
@@ -327,8 +325,8 @@ public class AStar extends Application {
 
         // FOR AESTHETIC PURPOSES.
         Timeline visualization = new Timeline();
-        Duration timePoint = Duration.ZERO;
-        KeyFrame fillBlock = null;      
+        KeyFrame fillBlock = null;
+        Duration timePoint = Duration.ZERO;      
 
         currentPoint = startPoint;        
         while(currentPoint != endPoint){
@@ -365,7 +363,7 @@ public class AStar extends Application {
                 if(b != startPoint && b != endPoint){
                     fillBlock = new KeyFrame(timePoint, e -> b.r.setFill(open));
                     visualization.getKeyFrames().add(fillBlock);
-                    timePoint = timePoint.add(pause);
+                    timePoint = timePoint.add(seekPause);
                 }
             }
 
@@ -375,45 +373,42 @@ public class AStar extends Application {
                 // IF B HAS LOWER F.
                 if(openList.get(i).fCost < currentPoint.fCost){ // IF B HAS LOWER F.
                     currentPoint = openList.get(i);
-                    comparisonCount++;
+                    visualization.getKeyFrames().add(new KeyFrame(timePoint, e -> count.setText(comparisonCount++ + "")));
                     
                 }
                 // IF B HAS SAME F COST, GO WITH LOWER H.
                 if(openList.get(i).fCost == currentPoint.fCost){                    
                     currentPoint = openList.get(i).hCost > currentPoint.hCost? currentPoint : openList.get(i);
-                    comparisonCount++;
+                    visualization.getKeyFrames().add(new KeyFrame(timePoint, e -> count.setText(comparisonCount++ + "")));
                 }           
                     
             }
  
-            // ADD COLOR OF BLOCK TO TIMELINE.
+            // ADD COLOR OF BLOCK & COMPARISON COUNT TO TIMELINE.
             if(currentPoint != startPoint && currentPoint != endPoint){ 
                 Rectangle r = currentPoint.r; 
                 fillBlock = new KeyFrame(timePoint, e -> r.setFill(closed));
                 visualization.getKeyFrames().add(fillBlock);
-                timePoint = timePoint.add(pause);
+                timePoint = timePoint.add(seekPause);
             }
             
             openList.remove(currentPoint);
-//            closedList.add(currentPoint);
-           
-            // UPDATE COMPARISON COUNT.
-            count.setText(comparisonCount + "");
+            closedList.add(currentPoint);
 
         }   
        
         // TRACE BACK PATH TO START POINT.
         Stack<Block> path = new Stack<Block>();
-        for(Block b = endPoint.parent; b != startPoint; b = b.parent){
+        for(Block b = endPoint; b != startPoint; b = b.parent){
             path.push(b);    
         }
  
         // ADD PATH TO TIMELINE.         
         while(!path.empty()){
             Block b = path.pop();
-            fillBlock = new KeyFrame(timePoint, e -> b.r.setFill(shortestPath));
+            fillBlock = new KeyFrame(timePoint, e -> { b.r.setFill(sp); b.parent.r.setFill(closed); });
             visualization.getKeyFrames().add(fillBlock);
-            timePoint = timePoint.add(pause);
+            timePoint = timePoint.add(pathPause);
         }
 
         // CHANGE RUN TO RESTART, BUTTON REUSE.
@@ -421,10 +416,6 @@ public class AStar extends Application {
         visualization.getKeyFrames().add(restart);
   
         visualization.play();
- 
-        // CHANGE RUN TO RESTART. BUTTON REUSE.
-//        run.setText("RESTART");
-//        run.setDisable(false);
 
     }
 

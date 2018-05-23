@@ -293,15 +293,22 @@ public class AStar extends Application {
     
             run.setText("RUN");
     
-            // REMOVE OPEN / CLOSED BLOCKS. 
-            for(Block b : openList)
-//                if(b != startPoint && b != endPoint)
-                    b.r.setFill(empty);
-            for(Block b : closedList)
-//                if(b != startPoint && b != endPoint)
-                    b.r.setFill(empty);   
+            // REMOVE OPEN / CLOSED.  
+            for(Block b : openList){
+                b.r.setFill(empty);
+                grid[b.x][b.y].status = Status.EMPTY;     
+            }
 
-            printGrid();
+            for(Block b : closedList){
+                if(b != startPoint && b != endPoint){
+                    b.r.setFill(empty);  
+                } 
+                    grid[b.x][b.y].status = Status.EMPTY;
+            }
+
+            // RETURN SP TO OSP & EP TO OEP.
+            startPoint.r.setFill(sp);
+            endPoint.r.setFill(ep);
             
             // RESTART STATE. 
             addStart.setDisable(false);
@@ -313,6 +320,8 @@ public class AStar extends Application {
             currentPoint = null;
             comparisonCount = 0; 
             count.setText(comparisonCount + "");
+            openList.clear();
+            closedList.clear();
     
             return;
         }   
@@ -370,7 +379,7 @@ public class AStar extends Application {
                     timePoint = timePoint.add(seekPause);
                 }
             }
-
+ 
             currentPoint = openList.get(0);
             // SEARCH OPEN LIST FOR LOWEST F COST. 
             for(int i = 1; i < openList.size(); i++){

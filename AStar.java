@@ -119,15 +119,23 @@ public class AStar extends Application {
  
             r.setFill(map.get(buttonSelected));    
             switch(buttonSelected){
-                case START:
-                    grid[x][y].status = Status.OPEN; // I.E. DON'T CALCULATE F COST. 
+                case START:  
+                    // ONLY ONE SP AT A TIME.
+                    if(startPoint != null){ 
+                        grid[startPoint.x][startPoint.y].status = Status.EMPTY;
+                        grid[startPoint.x][startPoint.y].r.setFill(empty);
+                    }
+                    grid[x][y].status = Status.CLOSED;
                     startPoint = grid[x][y];
                     break;
                 case WALL:
                     grid[x][y].status = Status.WALL;
                     break;
-                case END:
-//                    grid[x][y].status = Status.OPEN; // I.E. DON'T CALCULATE F COST. 
+                case END: 
+                    if(endPoint != null){
+                        grid[endPoint.x][endPoint.y].status = Status.EMPTY;
+                        grid[endPoint.x][endPoint.y].r.setFill(empty);
+                    }
                     endPoint = grid[x][y];
                     break;
                 case EMPTY:
@@ -300,29 +308,29 @@ public class AStar extends Application {
             }
 
             for(Block b : closedList){
-                if(b != startPoint && b != endPoint){
+                if(b != endPoint){
                     b.r.setFill(empty);  
-                } 
                     grid[b.x][b.y].status = Status.EMPTY;
+                }
             }
 
             // RETURN SP TO OSP & EP TO OEP.
-            startPoint.r.setFill(sp);
-            endPoint.r.setFill(ep);
+            startPoint.r.setFill(empty);
             
             // RESTART STATE. 
             addStart.setDisable(false);
             addWall.setDisable(false);
             addEnd.setDisable(false);
             remove.setDisable(false);
-            addStart.requestFocus();
-            buttonSelected = Selected.START;
+            addEnd.requestFocus();
+            buttonSelected = Selected.END;
+            startPoint = endPoint;
+            endPoint = null;
             currentPoint = null;
             comparisonCount = 0; 
             count.setText(comparisonCount + "");
             openList.clear();
             closedList.clear();
-    
             return;
         }   
     
@@ -340,8 +348,7 @@ public class AStar extends Application {
 
         // SET CURRENT POINT, ADD CURRENT POINT TO CLOSED LIST. 
         currentPoint = startPoint;
-        closedList.add(currentPoint);
-        grid[currentPoint.x][currentPoint.y].status = Status.CLOSED;        
+        closedList.add(currentPoint);        
         while(currentPoint != endPoint){
     
             // CALCULATE COSTS OF NEIGHBORS.

@@ -85,14 +85,14 @@
 
 /* BUTTON STYLE-SHEET TO REMOVE BLOCKS */ 
 .button-remove {
-    -fx-background-image: url("remove.png");
+    -fx-background-image: url("erase.png");
     -fx-background-color: White;
     -fx-background-size: 25px 25px;
     -fx-background-position: center;
     -fx-backgroun-repeat: no-repeat; 
 }
 .button-remove:hover {
-    -fx-background-image: url("remove.png");
+    -fx-background-image: url("erase.png");
     -fx-background-size: 20px 20px;
     -fx-background-repeat: no-repeat;
     -fx-cursor: hand;
@@ -101,3 +101,20 @@
     -fx-background-size: 20px 20px;
     -fx-background-repeat: no-repeat;
 }
+
+/* BUTTON STYLE-SHEET TO CLEAR BLOCKS */
+.button-clear {
+    -fx-background-image: url("clear.png");
+    -fx-background-color: White;
+    -fx-background-size: 25px 25px;
+    -fx-background-position: center;
+    -fx-backgroun-repeat: no-repeat;
+}
+.button-clear:hover {
+    -fx-background-image: url("clear.png");
+    -fx-background-size: 20px 20px;
+    -fx-background-repeat: no-repeat;
+    -fx-cursor: hand;
+}
+
+

@@ -132,6 +132,7 @@ public class AStar extends Application {
                     grid[x][y].status = Status.WALL;
                     break;
                 case END: 
+                    // ONLY ONE EP AT A TIME.
                     if(endPoint != null){
                         grid[endPoint.x][endPoint.y].status = Status.EMPTY;
                         grid[endPoint.x][endPoint.y].r.setFill(empty);
@@ -218,13 +219,21 @@ public class AStar extends Application {
          addEnd.setText("EP");
          addEnd.getStyleClass().add("button-addEnd");
          addEnd.setOnAction(e -> buttonSelected = Selected.END);
-        
-        // MENU - REMOVE (TRASHCAN IMAGE).
+
+        // MENU ERASE BAR. 
+        HBox eraseBar = new HBox(125);
+         eraseBar.setAlignment(Pos.CENTER);
+         
         Button remove = new Button();
          remove.getStyleClass().add("button-remove");
          remove.setAlignment(Pos.BOTTOM_LEFT);
          remove.setOnAction(e -> buttonSelected = Selected.EMPTY);
-                 
+        
+        Button clear = new Button();
+         clear.getStyleClass().add("button-clear");
+         clear.setAlignment(Pos.BOTTOM_RIGHT);
+         clear.setOnAction(e -> System.out.println("CLEAR BOARD"));         
+          
         // MENU TEXT. 
         Label comparisons = new Label("COMPARISONS:");
          comparisons.setStyle("-fx-font-size: 20;");
@@ -246,16 +255,17 @@ public class AStar extends Application {
         Button run = new Button();
          run.setText("RUN");
          run.getStyleClass().add("button-run");
-         run.setOnAction(e -> runAlgorithm(run, addStart, addWall, addEnd, remove, count));
+         run.setOnAction(e -> runAlgorithm(run, addStart, addWall, addEnd, remove, clear, count));
 
         // PIECE TOGETHER NODES.
         colorBar.getChildren().addAll(addStart, addWall, addEnd);
+        eraseBar.getChildren().addAll(remove, clear);
         spCount.getChildren().addAll(count, author);
         spCount.setAlignment(author, Pos.BOTTOM_RIGHT);
-        menu.getChildren().addAll(title, colorBar, run, remove, comparisons, spCount);
-        menu.setMargin(run, new Insets(30, 0, 0, 0));
-        menu.setMargin(remove, new Insets(0, 135, 30, 0));
+        menu.getChildren().addAll(title, colorBar, run, eraseBar, comparisons, spCount);
         menu.setMargin(title, new Insets(0, 0, 10, 40));
+        menu.setMargin(run, new Insets(30, 0, 0, 0));
+        menu.setMargin(eraseBar, new Insets(0, 0, 35, 0));
     }
 
    /*************
@@ -292,7 +302,7 @@ public class AStar extends Application {
    /*********************************
     * A* ALGORITHM (HEURISTIC FUNC) *
     *********************************/
-    private void runAlgorithm(Button run, Button addStart, Button addWall, Button addEnd, Button remove, Label count){       
+    private void runAlgorithm(Button run, Button addStart, Button addWall, Button addEnd, Button remove, Button clear, Label count){       
     
         Block currentPoint;
     
